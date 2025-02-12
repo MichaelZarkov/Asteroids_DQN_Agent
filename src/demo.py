@@ -8,7 +8,7 @@ if __name__ == '__main__':
     env = Space(training_mode=False, render_mode='human')
     # Load model from file.
     DQN_model = DQN(env.observation_space.shape[0], env.action_space.n)
-    DQN_model.load_state_dict(torch.load('../models/path/to/net.pt'))  # Load model from file.
+    DQN_model.load_state_dict(torch.load('../models/model_final/not_final_but_good_enough.pt'))  # Load model from file.
     DQN_model.eval()  # Set model to evaluation mode.
 
     # Game loop.
