@@ -1,11 +1,14 @@
 import torch
 
-from asteroids_env import Space
+import asteroids_env as ast
+import fun_env as fun
 from train import DQN
 
-if __name__ == '__main__':
+def demo(which_env):
     """Watch the DQN agent play the environment."""
-    env = Space(training_mode=False, render_mode='human')
+    if which_env == 'fun': env = fun.Space(training_mode=False, render_mode='human')
+    else:                  env = ast.Space(training_mode=False, render_mode='human')
+
     # Load model from file.
     DQN_model = DQN(env.observation_space.shape[0], env.action_space.n)
     DQN_model.load_state_dict(torch.load('../models/model_final/not_final_but_good_enough.pt'))  # Load model from file.
@@ -21,3 +24,6 @@ if __name__ == '__main__':
         score += reward
         if terminated: break
     print("Final score: ", score)
+
+if __name__ == '__main__':
+    demo(which_env="fun")

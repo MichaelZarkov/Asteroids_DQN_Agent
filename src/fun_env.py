@@ -8,46 +8,22 @@ from asteroid import Asteroid
 from object import Object
 from player import Player
 
+
 class State:
-        def __init__(self, spawn_timer, asteroids, projectiles, player):
-            self.spawn_timer = spawn_timer
-            self.asteroids = asteroids
-            self.projectiles = projectiles
-            self.player = player
+    def __init__(self, spawn_timer, asteroids, projectiles, player):
+        self.spawn_timer = spawn_timer
+        self.asteroids = asteroids
+        self.projectiles = projectiles
+        self.player = player
 
 class Space(gym.Env):
     """
-    ------ This is the exact environment the agent was trained on ------
-
-    The files 'asteroid.py', 'object.py', 'player.py', 'projectile.py' go along with it so don't change those.
-
-    Short explanation:
-        - the agent is in the middle of the screen (it cannot change its position);
-        - it can rotate clockwise or counterclockwise;
-        - it can shoot a projectile;
-        - there is exactly one asteroid at every given moment. The speed of the asteroid is random (see 'class Projectile');
-        - if the agent shoot the asteroid with a projectile, the asteroid gets destroyed and disappears. Then a new
-          projectile is spawned randomly at the edge of the field.
-        - in non-training mode, if an asteroid hits the agent, the agent dies and the game is terminated.
-        - in training mode the agent has more lives. In this mode we also have "death replay buffer" - every time the
-          agent dies the environment is set to a previous state moments before the collision, so the agent can
-          experience it multiple times and hopefully learn how to avoid it.
-
-    This is a very simple environment, compared to what I had in mind originally. In the more complex environments
-    the agent just could not learn. Here are just a couple of the factors I think that go into the failure of learning
-    the more complex environments:
-        - Error in my code I wasn't aware of.
-        - Bad reward system (whatever that could mean).
-        - Too many possibilities to do stuff in the environment and not enough time training and experienced situations.
-        - Things can be accomplished in many, many, many different ways so the agent gets stuck deciding which one to
-          choose (A very clear example of this was when the projectiles could travel far enough to go past the edge of
-          the field and go to the other side. The agent sometimes got stuck trying to decide to shoot directly at the
-          projectile or through the edge. And I emphasize that this is kind of (but not exactly) a binary choice the
-          agent got stuck on. In the more complex environments we have basically a continuum of choices).
+    This environment is for f**king around and testing the agent's limits.
+    If you break the code irreversibly, just copy and paste the 'asteroids_env.py' and start over.
     """
 
     METADATA = {"render_modes": ["human", "rgb_array"], "render_fps": 60}
-    DT = 1.0 / METADATA['render_fps'] # Time between frames.
+    DT = 1.0 / METADATA['render_fps']  # Time between frames.
     # The actual game field should be slightly bigger than the display window. This is entirely
     # because of aesthetic reasons when viewing the game. If we don't have this difference between
     # the sizes (or if it is too small) we will see objects teleport from one edge of the window
@@ -60,10 +36,10 @@ class Space(gym.Env):
     FH = WH + 2 * BORDER_SIZE  # Game field height.
 
     TRAINING_LIVES = 50  # Number of allowed player-asteroid collisions before termination.
-    RELIVE_STATES = 60   # Save this many states in the past.
+    RELIVE_STATES = 60  # Save this many states in the past.
 
-    MAX_ASTEROIDS = 1  # Don't spawn if more than this.
-    SPAWN_TIME = 0.0   # Interval between asteroid spawns measured in second.
+    MAX_ASTEROIDS = 5  # Don't spawn if more than this.
+    SPAWN_TIME = 5000.0  # Interval between asteroid spawns measured in second.
 
     MAX_OBS_AST = 1  # Max observable asteroids. The observation includes at most this many asteroids.
 
@@ -77,9 +53,9 @@ class Space(gym.Env):
         (pygame.K_UP,): 1,
         (pygame.K_a,): 2,
         (pygame.K_d,): 3,
-        (pygame.K_UP, pygame.K_a): 1,  # Prioritize shooting over rotating.
+        (pygame.K_UP, pygame.K_a): 1,  # Prioritize shooting over rotating, when pressing 2 buttons.
         (pygame.K_UP, pygame.K_d): 1,  # Prioritize shooting over rotating.
-        
+
         # Both rotate clockwise and rotate counterclockwise are pressed so they cancel each other out.
         (pygame.K_a, pygame.K_d): 0,
         (pygame.K_UP, pygame.K_a, pygame.K_d): 1,
@@ -161,9 +137,9 @@ class Space(gym.Env):
     def _get_obs(self):
         total_params = 4 + Space.MAX_OBS_AST * 5  # See __init__ for meaning of params.
         obs = np.zeros(shape=(total_params,), dtype=np.float32)
-    
+
         # Player info.
-        obs[0] = self.s.player.facing[0] + 1.2 # make them above 0.0 . Don't know if it helps.
+        obs[0] = self.s.player.facing[0] + 1.2  # make them above 0.0 . Don't know if it helps.
         obs[1] = self.s.player.facing[1] + 1.2
         obs[2] = self.s.player.shot_cooldown
         obs[3] = 0.0 if self.s.player.shot_cooldown > 0.0 else 1.0
@@ -202,15 +178,19 @@ class Space(gym.Env):
         """Executes the given action."""
         self.s.player.update_cooldown(dt=Space.DT)
 
-        if   action == 1: self.s.projectiles += self.s.player.shoot()
-        elif action == 2: self.s.player.rotate(clockwise=False, dt=Space.DT)
-        elif action == 3: self.s.player.rotate(clockwise=True, dt=Space.DT)
+        if action == 1:
+            self.s.projectiles += self.s.player.shoot()
+        elif action == 2:
+            self.s.player.rotate(clockwise=False, dt=Space.DT)
+        elif action == 3:
+            self.s.player.rotate(clockwise=True, dt=Space.DT)
 
     def _player_collide(self):
         """Returns True if the player currently collides with an asteroid. Returns one of the asteroids the player
         currently collides with or None if the player doesn't collide with asteroid."""
         for a in self.s.asteroids:
-            if Space._intersect(self.s.player.pos[0], self.s.player.pos[1], a.pos[0], a.pos[1], self.s.player.hb_size, a.hb_size):
+            if Space._intersect(self.s.player.pos[0], self.s.player.pos[1], a.pos[0], a.pos[1], self.s.player.hb_size,
+                                a.hb_size):
                 return True, a
         return False, None
 
@@ -236,7 +216,7 @@ class Space(gym.Env):
     def _spawn_asteroid(self):
         """Spawns an asteroid randomly at the edge of the filed."""
         if self.s.spawn_timer <= 0.0 and len(self.s.asteroids) < Space.MAX_ASTEROIDS:
-            self.s.asteroids.append(Asteroid('S'))
+            self.s.asteroids.append(Asteroid('L'))
             self.s.spawn_timer = Space.SPAWN_TIME
         else:
             self.s.spawn_timer -= Space.DT
@@ -259,7 +239,8 @@ class Space(gym.Env):
     def step(self, action):
         self._player_act(action)
         # Award the player for being accurate.
-        destroyed_asteroid_reward = self._precise_shot(projectile=self.s.projectiles[-1]) if self.s.player.shot_cooldown == Player._COOLDOWN else 0.0
+        destroyed_asteroid_reward = self._precise_shot(
+            projectile=self.s.projectiles[-1]) if self.s.player.shot_cooldown == Player._COOLDOWN else 0.0
         for a in self.s.asteroids: a.update_pos(dt=Space.DT)
         for p in self.s.projectiles: p.update_pos(dt=Space.DT)
 
@@ -301,9 +282,9 @@ class Space(gym.Env):
 
     def _draw_player(self, canvas):
         # Draw the hit box for debugging.
-        #pygame.draw.circle(
+        # pygame.draw.circle(
         #    canvas, color=AsteroidsEnv.PL_COL, center=AsteroidsEnv.transform(self.s.player.pos), radius=self.s.player.hb_size, width=2
-        #)
+        # )
         pygame.draw.polygon(
             canvas,
             color=Space.PL_COL,
