@@ -7,7 +7,6 @@ import pygame
 from asteroid import Asteroid
 from object import Object
 from player import Player
-from projectile import Projectile
 
 class State:
         def __init__(self, spawn_timer, asteroids, projectiles, player):
