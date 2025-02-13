@@ -1,0 +1,2 @@
+This folder contains environment files for fulling around, changing parameters and testing the limits of the 
+agent. If you break the code, just copy and paste the original files from folder ***train_env***.
